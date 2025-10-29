@@ -23,7 +23,7 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <Link href="/" className="text-2xl font-black">
-            <span className="text-pink-500">CULTURELE</span> <span className="text-blue-500">INTROWEEK</span>
+            <span className="text-black-500">CULTURELE INTROWEEK MBO</span>
           </Link>
 
           {/* Desktop Navigation */}
