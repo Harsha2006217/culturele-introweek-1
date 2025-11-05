@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Upload, Calendar, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { InstitutionCalendar } from "@/components/institution-calendar"
-import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import type { ProgramDuration } from "@/lib/types"
 
@@ -32,7 +31,7 @@ export default function InstellingenAanmeldenPage() {
     description: "",
     activityDescription: "",
     capacity: "",
-    duration: "60" as ProgramDuration,
+    duration: 60 as ProgramDuration,
     comments: "",
   })
 
@@ -81,30 +80,34 @@ export default function InstellingenAanmeldenPage() {
     setIsSubmitting(true)
 
     try {
-      const supabase = createClient()
-
       const editToken = crypto.randomUUID()
 
       let logoUrl = null
       if (logo) {
-        const fileExt = logo.name.split(".").pop()
-        const fileName = `${editToken}.${fileExt}`
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("institution-logos")
-          .upload(fileName, logo)
+        const formData = new FormData()
+        formData.append('file', logo)
+        formData.append('editToken', editToken)
 
-        if (uploadError) throw uploadError
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("institution-logos").getPublicUrl(fileName)
+        if (!uploadResponse.ok) {
+          throw new Error('Logo upload failed')
+        }
 
-        logoUrl = publicUrl
+        const { url } = await uploadResponse.json()
+        logoUrl = url
       }
 
-      const { data: institution, error: institutionError } = await supabase
-        .from("institutions")
-        .insert({
+      // Create institution
+      const response = await fetch('/api/institutions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.institutionName,
           general_email: formData.generalEmail,
           contact_person: formData.contactPerson,
@@ -115,28 +118,40 @@ export default function InstellingenAanmeldenPage() {
           description: formData.description,
           activity_description: formData.activityDescription,
           capacity_per_slot: Number.parseInt(formData.capacity),
-          program_duration: Number.parseInt(formData.duration) as ProgramDuration,
+          program_duration: formData.duration as ProgramDuration,
           comments: formData.comments || null,
           edit_token: editToken,
-        })
-        .select()
-        .single()
+        }),
+      })
 
-      if (institutionError) throw institutionError
+      if (!response.ok) {
+        throw new Error('Failed to create institution')
+      }
+
+      const institution = await response.json()
 
       const availabilityRecords = Object.entries(availability).flatMap(([date, times]) =>
         times.map((time) => ({
           institution_id: institution.id,
           date,
           start_time: time,
-          end_time: calculateEndTime(time, Number.parseInt(formData.duration)),
+          end_time: calculateEndTime(time, formData.duration),
           is_available: true,
         })),
       )
 
-      const { error: availabilityError } = await supabase.from("institution_availability").insert(availabilityRecords)
+      // Create availability records
+      const availabilityResponse = await fetch('/api/institutions/availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(availabilityRecords),
+      })
 
-      if (availabilityError) throw availabilityError
+      if (!availabilityResponse.ok) {
+        throw new Error('Failed to create availability records')
+      }
 
       toast({
         title: "Aanmelding succesvol!",

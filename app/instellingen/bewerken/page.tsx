@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Loader2, Save } from "lucide-react"
 import Link from "next/link"
 import { InstitutionCalendar } from "@/components/institution-calendar"
-import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import type { Institution, ProgramDuration } from "@/lib/types"
 
@@ -25,7 +24,19 @@ function EditContent() {
   const [institution, setInstitution] = useState<Institution | null>(null)
   const [availability, setAvailability] = useState<Record<string, string[]>>({})
 
-  const [formData, setFormData] = useState({
+  interface FormData {
+    name: string
+    contact_person: string
+    email: string
+    visit_address: string
+    description: string
+    activity_description: string
+    capacity_per_slot: string
+    program_duration: string
+    comments: string
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     contact_person: "",
     email: "",
@@ -33,7 +44,7 @@ function EditContent() {
     description: "",
     activity_description: "",
     capacity_per_slot: "",
-    program_duration: "60" as ProgramDuration,
+    program_duration: "60",
     comments: "",
   })
 
@@ -45,16 +56,12 @@ function EditContent() {
       }
 
       try {
-        const supabase = createClient()
+        const response = await fetch(`/api/institutions/${token}`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch institution data')
+        }
 
-        // Fetch institution
-        const { data: instData, error: instError } = await supabase
-          .from("institutions")
-          .select("*")
-          .eq("edit_token", token)
-          .single()
-
-        if (instError) throw instError
+        const { institution: instData, availability: availData } = await response.json()
 
         setInstitution(instData)
         setFormData({
@@ -65,21 +72,13 @@ function EditContent() {
           description: instData.description,
           activity_description: instData.activity_description,
           capacity_per_slot: instData.capacity_per_slot.toString(),
-          program_duration: instData.program_duration.toString() as ProgramDuration,
+          program_duration: instData.program_duration.toString(),
           comments: instData.comments || "",
         })
 
-        // Fetch availability
-        const { data: availData, error: availError } = await supabase
-          .from("institution_availability")
-          .select("*")
-          .eq("institution_id", instData.id)
-
-        if (availError) throw availError
-
         // Group availability by date
         const grouped: Record<string, string[]> = {}
-        availData.forEach((slot) => {
+        availData.forEach((slot: { date: string; start_time: string }) => {
           if (!grouped[slot.date]) {
             grouped[slot.date] = []
           }
@@ -106,12 +105,13 @@ function EditContent() {
 
     setSaving(true)
     try {
-      const supabase = createClient()
-
       // Update institution
-      const { error: updateError } = await supabase
-        .from("institutions")
-        .update({
+      const updateResponse = await fetch(`/api/institutions/${token}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name,
           contact_person: formData.contact_person,
           email: formData.email,
@@ -119,32 +119,39 @@ function EditContent() {
           description: formData.description,
           activity_description: formData.activity_description,
           capacity_per_slot: Number.parseInt(formData.capacity_per_slot),
-          program_duration: Number.parseInt(formData.program_duration) as ProgramDuration,
+          program_duration: parseInt(formData.program_duration),
           comments: formData.comments || null,
           updated_at: new Date().toISOString(),
-        })
-        .eq("id", institution.id)
+        }),
+      })
 
-      if (updateError) throw updateError
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update institution')
+      }
 
-      // Delete old availability
-      await supabase.from("institution_availability").delete().eq("institution_id", institution.id)
-
-      // Insert new availability
+      // Create availability records
       const availabilityRecords = Object.entries(availability).flatMap(([date, times]) =>
         times.map((time) => ({
           institution_id: institution.id,
           date,
           start_time: time,
-          end_time: calculateEndTime(time, Number.parseInt(formData.program_duration)),
+          end_time: calculateEndTime(time, parseInt(formData.program_duration)),
           is_available: true,
         })),
       )
 
       if (availabilityRecords.length > 0) {
-        const { error: availError } = await supabase.from("institution_availability").insert(availabilityRecords)
+        const availabilityResponse = await fetch(`/api/institutions/${token}/availability`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(availabilityRecords),
+        })
 
-        if (availError) throw availError
+        if (!availabilityResponse.ok) {
+          throw new Error('Failed to update availability')
+        }
       }
 
       toast({
@@ -292,7 +299,7 @@ function EditContent() {
                   id="program_duration"
                   value={formData.program_duration}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, program_duration: e.target.value as ProgramDuration }))
+                    setFormData((prev) => ({ ...prev, program_duration: e.target.value }))
                   }
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
