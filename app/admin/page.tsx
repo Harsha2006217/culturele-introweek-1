@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
+import { getUserByToken } from "@/lib/auth/auth"
 import { Button } from "@/components/ui/button"
 import { Building2, GraduationCap, Calendar, Sparkles, Users, FileText, LogOut, Edit3 } from "lucide-react"
 
@@ -12,30 +12,35 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [userName, setUserName] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          router.push("/admin/auth/login")
+          return
+        }
+
+        const user = await getUserByToken(token)
+        if (!user) {
+          router.push("/admin/auth/login")
+          return
+        }
+
+        setUserName(user.email || "Admin")
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Auth error:', error)
         router.push("/admin/auth/login")
-        return
       }
-
-      // Load admin profile
-      const { data: profile } = await supabase.from("admin_profiles").select("full_name").eq("id", user.id).single()
-
-      setUserName(profile?.full_name || user.email || "Admin")
-      setIsLoading(false)
     }
 
     checkAuth()
-  }, [router, supabase])
+  }, [router])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('auth_token')
     router.push("/admin/auth/login")
   }
 

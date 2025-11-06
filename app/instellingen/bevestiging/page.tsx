@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { CheckCircle2, Mail, Edit, Loader2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { getInstitutionByToken } from "@/lib/services/institutions"
 import type { Institution } from "@/lib/types"
 
 function ConfirmationContent() {
@@ -23,10 +23,7 @@ function ConfirmationContent() {
       }
 
       try {
-        const supabase = createClient()
-        const { data, error } = await supabase.from("institutions").select("*").eq("edit_token", token).single()
-
-        if (error) throw error
+        const data = await getInstitutionByToken(token)
         setInstitution(data)
       } catch (error) {
         console.error("[v0] Error fetching institution:", error)

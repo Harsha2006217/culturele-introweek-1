@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import Image from "next/image"
 
 const COLLEGES = [
   "Hout en Meubileringscollege",
@@ -508,6 +509,69 @@ export default function DocentenAanmeldenPage() {
           </form>
         </Card>
       </div>
+      <footer className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-8 md:py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-6 md:mb-8">
+            <div>
+              <h3 className="text-xl md:text-2xl font-black mb-3 md:mb-4">
+                Contact
+              </h3>
+              <p className="text-white/90 text-sm md:text-base">
+                <a
+                  href="mailto:cultureleintroweek@rocva.nl"
+                  className="hover:underline"
+                >
+                  cultureleintroweek@rocva.nl
+                </a>
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl md:text-2xl font-black mb-3 md:mb-4">
+                Links
+              </h3>
+              <ul className="space-y-2 text-white/90 text-sm md:text-base">
+                <li>
+                  <Link href="/bronnen" className="hover:underline">
+                    Bronnen & Video's
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:underline">
+                    Cultuurcoördinatoren
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/programma" className="hover:underline">
+                    Programma
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xl md:text-2xl font-black mb-3 md:mb-4">
+                Deadlines
+              </h3>
+              <ul className="space-y-2 text-white/90 text-sm md:text-base">
+                <li>1 maart 2026: Instellingen</li>
+                <li>1 maart 2026: Docenten</li>
+                <li>1 juni 2026: Programma</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-white/20 pt-6 md:pt-8 text-center">
+            <Image
+              src="/neus.png"
+              alt="Neus Footer"
+              width={1920}
+              height={96}
+              className="w-full h-16 md:h-20 lg:h-24 object-contain mb-4"
+            />
+            <p className="text-white/80 text-sm md:text-base">
+              © 2026 Culturele INTROWEEK MBO Amsterdam
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -77,7 +77,7 @@ const mockInstitutions = [
 ]
 
 const partners = [
-  { name: "ROC van Amsterdam", url: "https://www.rocva.nl" },
+  { name: "ROC van Amsterdam en Flevoland", url: "https://www.rocva.nl" },
   { name: "Mediacollege Amsterdam", url: "https://www.ma-web.nl" },
   { name: "Hout en Meubileringscollege", url: "https://www.hmc.nl" },
   { name: "Stichting Museumnacht Amsterdam", url: "https://www.n8.nl" },

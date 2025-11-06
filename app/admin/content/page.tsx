@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,21 +9,15 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-
-interface ContentItem {
-  id: string
-  key: string
-  content: string
-  section: string
-}
+import { getAllContent, updateContent, type SiteContent } from "@/lib/services/content"
+import { getUserByToken } from "@/lib/auth/auth"
 
 export default function ContentManagementPage() {
-  const [content, setContent] = useState<ContentItem[]>([])
+  const [content, setContent] = useState<SiteContent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     loadContent()
@@ -32,9 +25,7 @@ export default function ContentManagementPage() {
 
   const loadContent = async () => {
     try {
-      const { data, error } = await supabase.from("site_content").select("*").order("section", { ascending: true })
-
-      if (error) throw error
+      const data = await getAllContent()
       setContent(data || [])
     } catch (error) {
       console.error("Error loading content:", error)
@@ -44,25 +35,24 @@ export default function ContentManagementPage() {
     }
   }
 
-  const handleUpdate = async (id: string, newContent: string) => {
+  const handleUpdate = async (id: number, newContent: string) => {
     setIsSaving(true)
     setMessage(null)
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        router.push("/admin/auth/login")
+        return
+      }
+
+      const user = await getUserByToken(token)
       if (!user) {
         router.push("/admin/auth/login")
         return
       }
 
-      const { error } = await supabase
-        .from("site_content")
-        .update({ content: newContent, updated_by: user.id })
-        .eq("id", id)
-
-      if (error) throw error
+      await updateContent(id, newContent, user.id)
 
       setMessage({ type: "success", text: "Content succesvol opgeslagen!" })
       setTimeout(() => setMessage(null), 3000)
@@ -82,7 +72,7 @@ export default function ContentManagementPage() {
       acc[item.section].push(item)
       return acc
     },
-    {} as Record<string, ContentItem[]>,
+    {} as Record<string, SiteContent[]>,
   )
 
   if (isLoading) {
@@ -125,12 +115,12 @@ export default function ContentManagementPage() {
               <div className="space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="space-y-2">
-                    <Label htmlFor={item.key} className="text-sm font-medium">
-                      {item.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    <Label htmlFor={item.content_key} className="text-sm font-medium">
+                      {item.content_key.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </Label>
                     {item.content.length > 100 ? (
                       <Textarea
-                        id={item.key}
+                        id={item.content_key}
                         value={item.content}
                         onChange={(e) => {
                           const newContent = [...content]
@@ -143,7 +133,7 @@ export default function ContentManagementPage() {
                       />
                     ) : (
                       <Input
-                        id={item.key}
+                        id={item.content_key}
                         value={item.content}
                         onChange={(e) => {
                           const newContent = [...content]

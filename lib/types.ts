@@ -21,11 +21,13 @@ export type ClassYear = 1 | 2 | 3 | 4
 export type ProgramDuration = 60 | 75 | 90
 
 export interface Institution {
-  id: string
+  id: number
   name: string
+  general_email: string
   contact_person: string
   email: string
   logo_url: string | null
+  postal_address: string
   visit_address: string
   description: string
   activity_description: string
@@ -33,8 +35,8 @@ export interface Institution {
   program_duration: ProgramDuration
   comments: string | null
   edit_token: string
-  created_at: string
-  updated_at: string
+  created_at: Date
+  updated_at?: Date
 }
 
 export interface InstitutionAvailability {

@@ -7,34 +7,9 @@ import { Calendar, Building2, GraduationCap, Sparkles, ArrowRight, Play } from "
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <div className="w-full overflow-hidden bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 py-2">
-        <Image
-          src="/amsterdam750-slinger.svg"
-          alt="Amsterdam 750"
-          width={1920}
-          height={64}
-          className="w-full h-12 md:h-14 lg:h-16 object-contain"
-          priority
-        />
-      </div>
+
 
       <section className="relative overflow-hidden bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
-        <div className="absolute inset-0 opacity-10">
-          <Image
-            src="/hand-gesture-1.png"
-            alt=""
-            width={300}
-            height={300}
-            className="absolute top-10 right-10 w-32 md:w-48 opacity-30"
-          />
-          <Image
-            src="/hand-gesture-2.png"
-            alt=""
-            width={300}
-            height={300}
-            className="absolute bottom-10 left-10 w-32 md:w-48 opacity-30"
-          />
-        </div>
         <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-20">
           <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
             <div className="space-y-6">
@@ -80,7 +55,7 @@ export default function HomePage() {
             </div>
             <div className="relative flex justify-center">
               <Image
-                src="/kikker-spraycan.png"
+                src="/oog.png"
                 alt="Kikker Mascot"
                 width={400}
                 height={400}
@@ -275,8 +250,8 @@ export default function HomePage() {
           </div>
           <div className="border-t border-white/20 pt-6 md:pt-8 text-center">
             <Image
-              src="/kikker-footer.svg"
-              alt="Kikker Footer"
+              src="/neus.png"
+              alt="Neus Footer"
               width={1920}
               height={96}
               className="w-full h-16 md:h-20 lg:h-24 object-contain mb-4"
